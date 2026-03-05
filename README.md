@@ -12,6 +12,8 @@
 
 训练数据为《红楼梦》文本，用于演示文本生成任务。
 
+
+
 ## 快速开始
 
 ### 环境依赖
@@ -36,20 +38,59 @@ python GPT_transformer.py
 | num_heads | 8 | 注意力头数 |
 | n_layers | 6 | Block 层数 |
 | learning_rate | 3e-4 | 学习率 |
-| max_iters | 1000 | 训练轮数 |
+| max_iters | 5000 | 训练轮数 |
+
+### 说明
+#### 参数方面
+因为本项目的重点在于给大家展示transformer的核心机制，所以在参数配置上可能比较保守，仅用于演示。
+若大家有兴趣，可根据自己的需求调整参数。
+若想追求不错的训练效果，可以参照以下参数：
+| 参数 | 建议值 |
+|------|--------|
+| batch_size | 64 |
+| block_size | 512 |
+| n_embd | 768 |
+| num_heads | 12 |
+| n_layers | 10 |
+| learning_rate | 1e-4 |
+| max_iters | 10000 |
+
+若采用以上参数配置，可采用混合精度训练，以加速训练过程，如下：
+                                                                                                                                                                                  
+  训练循环改动（约5行）：                                                                                                                                                          
+   混合精度训练在 main( ) 的训练循环里                                                                                                                                                         
+ ``` 
+  scaler = torch.amp.GradScaler('cuda')                                                                                                                                            
+                                                                                                                                                                                   
+  for i in range(max_iters):                                                                                                                                                       
+      xb, yb = get_batch("train")                                                                                                                                                  
+                                                                                                                                                                                   
+      with torch.autocast(device_type='cuda', dtype=torch.bfloat16):                                                                                                               
+          logits, loss = model(xb, yb)                                                                                                                                             
+                                                                                                                                                                                   
+      optimizer.zero_grad(set_to_none=True)                                                                                                                                        
+      scaler.scale(loss).backward()                                                                                                                                                
+      scaler.step(optimizer)                                                                                                                                                       
+      scaler.update()    
+   ```      
+#### 学习率调度方面
+学习率的设置对模型训练至关重要。在本项目中，我们采用了 3e-4 的学习率。若追求更好的效果，可根据实际情况调整学习率。因为固定学习率收敛效果差，cosine decay 是训练语言模型的标配，可以引入。
 
 ## 项目结构
 
 ```
 .
-├── GPT_transformer.py          # 主代码
-├── README.md                   # 项目说明
-├── GPT架构完整解读.md          # 整体架构分析
-├── transformer单头注意力机制.md # Q、K、V 详解
-├── transformer多头注意力完整结构图.md # 多头注意力图解
-├── Transformer完整架构图.md    # 完整架构展示
-├── transformer的核心嵌入方式.md # 词嵌入与位置嵌入
-└── 红楼梦.txt                 # 训练数据
+├── src/
+│   └── GPT_transformer.py              # 主代码
+├── data/
+│   └── 红楼梦.txt                      # 训练数据
+├── transformer相关讲解/
+│   ├── 1.transformer的核心嵌入方式.md   # 词嵌入与位置嵌入
+│   ├── 2.transformer单头注意力机制.md   # Q、K、V 详解
+│   ├── 3.transformer多头注意力机制.md   # 多头注意力图解
+│   └── 4.Transformer完整架构图.md       # 完整架构展示
+├── 代码结构总览.md                      # 整体架构分析
+└── README.md                           # 项目说明
 ```
 
 ## 核心架构
@@ -80,13 +121,13 @@ python GPT_transformer.py
 
 ## 文档说明
 
-项目中包含详细的原理讲解文档：
+项目中包含详细的原理讲解文档（位于 `transformer相关讲解/` 目录）：
 
-- **GPT架构完整解读.md** - 整体架构分析
-- **transformer单头注意力机制.md** - Q、K、V 详解
-- **transformer多头注意力完整结构图.md** - 多头注意力图解
-- **Transformer完整架构图.md** - 完整架构展示
-- **transformer的核心嵌入方式.md** - 词嵌入与位置嵌入
+- **1.transformer的核心嵌入方式.md** - 词嵌入与位置嵌入
+- **2.transformer单头注意力机制.md** - Q、K、V 详解
+- **3.transformer多头注意力机制.md** - 多头注意力图解
+- **4.Transformer完整架构图.md** - 完整架构展示
+- **代码结构总览.md**（根目录）- 整体架构分析
 
 ## 输出示例
 
@@ -201,5 +242,6 @@ python GPT_transformer.py
 MIT License 
 
 ---
+讲解部分有内容重复讲解了，望见谅！
 
 如果对你有帮助，欢迎 Star ⭐
